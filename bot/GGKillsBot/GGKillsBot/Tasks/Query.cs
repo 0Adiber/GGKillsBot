@@ -49,6 +49,17 @@ namespace GGKillsBot.Tasks
 
                 string site = getPageAsString("https://www.gommehd.net/player/index?playerName=" + cmd[1]);
 
+                if (site.StartsWith("ERROR: "))
+                {
+                    player.functions.Chat("/cc [NameMCBot] " + site + " Zweiter Versuch..");
+                    site = getPageAsString("https://www.gommehd.net/player/index?playerName=" + cmd[1]);
+                    if (site.StartsWith("ERROR: "))
+                    {
+                        player.functions.Chat("/cc [NameMCBot] Zweiter Versuch fehlgeschlagen. " + site);
+                        return;
+                    }
+                }
+
                 int start = site.IndexOf("id=\"gungame\"");
 
                 if (start < 0)
@@ -79,7 +90,12 @@ namespace GGKillsBot.Tasks
             request.Credentials = CredentialCache.DefaultCredentials;
             ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
 
-            WebResponse response = request.GetResponse();
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+
+            if(response.StatusCode != HttpStatusCode.OK)
+            {
+                return "ERROR: " + response.StatusCode;
+            }
 
             string responseFromServer = "";
             using (Stream dataStream = response.GetResponseStream())
